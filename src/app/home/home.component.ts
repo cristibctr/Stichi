@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit, QueryList, ViewChildren, ElementRef } from '@angular/core';
 import { ApiService } from '../services/api.service';
+import { JourneyService } from '../services/journey.service';
 
 /**
  * The home component serves as the landing page for the application.
@@ -12,7 +13,7 @@ import { ApiService } from '../services/api.service';
   selector: 'app-home',
   templateUrl: './home.component.html'
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, AfterViewInit {
   /**
    * A subset of products displayed on the home page carousel. In a real
    * application this would be loaded from a backend API; here we define
@@ -20,7 +21,9 @@ export class HomeComponent implements OnInit {
    */
   featured: any[] = [];
 
-  constructor(private api: ApiService) {}
+  @ViewChildren('journeySection') sections!: QueryList<ElementRef<HTMLElement>>;
+
+  constructor(private api: ApiService, private journey: JourneyService) {}
 
   ngOnInit(): void {
     // Define a few sample products for the horizontal carousel. You may
@@ -83,5 +86,9 @@ export class HomeComponent implements OnInit {
     if (el) {
       el.scrollIntoView({ behavior: 'smooth' });
     }
+  }
+
+  ngAfterViewInit(): void {
+    this.sections.forEach((s) => this.journey.registerSection(s.nativeElement));
   }
 }

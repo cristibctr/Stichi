@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 import * as THREE from 'three';
-import { EffectComposer, RenderPass, UnrealBloomPass } from 'three-stdlib';
+import { SettingsService } from '../services/settings.service';
 
 @Component({
   selector: 'app-hero-canvas',
@@ -11,77 +11,163 @@ export class HeroCanvasComponent implements AfterViewInit, OnDestroy {
   private renderer!: THREE.WebGLRenderer;
   private scene!: THREE.Scene;
   private camera!: THREE.PerspectiveCamera;
-  private composer!: EffectComposer;
-  private stars!: THREE.Points<THREE.BufferGeometry, THREE.PointsMaterial>;
-  private frame = 0;
+  private material!: THREE.ShaderMaterial;
+  private plane!: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>;
+  private maskTex!: THREE.Texture;
   private raf = 0;
-  private mouse = new THREE.Vector2(0,0);
+  private mouse = new THREE.Vector2();
+  private reduce = false;
+
+  constructor(private settings: SettingsService) {}
 
   ngAfterViewInit(): void {
     const el = this.canvas.nativeElement;
+    this.reduce = this.settings.prefersReducedMotion();
+
     this.renderer = new THREE.WebGLRenderer({ canvas: el, antialias: true });
     this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
     this.renderer.setSize(el.clientWidth, el.clientHeight, false);
 
     this.scene = new THREE.Scene();
-    this.camera = new THREE.PerspectiveCamera(55, el.clientWidth / el.clientHeight, 0.1, 2000);
-    this.camera.position.set(0, 0, 90);
+    this.camera = new THREE.PerspectiveCamera(45, el.clientWidth / el.clientHeight, 0.1, 100);
+    this.camera.position.set(0, 0, 5);
 
-    // Stars
-    const count = 2000;
-    const positions = new Float32Array(count * 3);
-    for (let i = 0; i < count; i++) {
-      const r = 120 * Math.cbrt(Math.random());
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(2 * Math.random() - 1);
-      positions[i*3]   = r * Math.sin(phi) * Math.cos(theta);
-      positions[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
-      positions[i*3+2] = r * Math.cos(phi);
+    const geo = new THREE.PlaneGeometry(4, 2.5, 128, 64);
+    const colorTex = this.makeKnitTexture('#e6d5c3');
+    const normalTex = this.makeNormalTexture();
+    this.maskTex = this.makeMaskTexture();
+
+    this.material = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: { value: 0 },
+        uWind: { value: this.reduce ? 0.0 : 0.25 },
+        uIntensity: { value: 0.4 },
+        uColor: { value: colorTex },
+        uNormal: { value: normalTex },
+        uMask: { value: this.maskTex },
+        uGloss: { value: 0.3 }
+      },
+      vertexShader: `
+        uniform float uTime; 
+        uniform float uWind; 
+        uniform float uIntensity; 
+        varying vec2 vUv; 
+        void main(){
+          vUv = uv; 
+          vec3 pos = position; 
+          float n = sin(pos.x*3.0 + uTime*0.5) * sin(pos.y*2.0 + uTime*0.3);
+          pos.z += n * uIntensity; 
+          pos.z += sin((pos.x+pos.y+uTime*0.2)*2.0) * uWind; 
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(pos,1.0); 
+        }
+      `,
+      fragmentShader: `
+        uniform sampler2D uColor; 
+        uniform sampler2D uNormal; 
+        uniform sampler2D uMask; 
+        uniform float uGloss; 
+        varying vec2 vUv; 
+        void main(){
+          vec3 color = texture2D(uColor, vUv*4.0).rgb; 
+          vec3 nrm = texture2D(uNormal, vUv*4.0).xyz*2.0-1.0; 
+          vec3 lightDir = normalize(vec3(0.4,0.6,1.0)); 
+          float diff = 0.6 + 0.4 * dot(nrm, lightDir); 
+          float spec = pow(max(dot(reflect(-lightDir, nrm), vec3(0,0,1)),0.0), 16.0)*uGloss; 
+          float mask = texture2D(uMask, vUv).r; 
+          color = mix(color*0.7, color, 1.0-mask); 
+          spec *= (1.0-mask); 
+          gl_FragColor = vec4(color*diff + spec, 1.0); 
+        }
+      `
+    });
+
+    this.plane = new THREE.Mesh(geo, this.material);
+    this.scene.add(this.plane);
+
+    if (!this.reduce) {
+      el.addEventListener('pointermove', (e) => {
+        const rect = el.getBoundingClientRect();
+        this.mouse.set(
+          (e.clientX - rect.left) / rect.width * 2 - 1,
+          -((e.clientY - rect.top) / rect.height * 2 - 1)
+        );
+      });
     }
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    const mat = new THREE.PointsMaterial({
-      size: 1.6,
-      color: new THREE.Color('#e5989b').lerp(new THREE.Color('#6b705c'), 0.35),
-      transparent: true,
-      opacity: 0.9,
-      depthWrite: false
-    });
-    this.stars = new THREE.Points(geo, mat);
-    this.scene.add(this.stars);
 
-    // Post FX Bloom
-    const renderPass = new RenderPass(this.scene, this.camera);
-    this.composer = new EffectComposer(this.renderer);
-    this.composer.addPass(renderPass);
-    const bloom = new UnrealBloomPass(new THREE.Vector2(el.clientWidth, el.clientHeight), 0.8, 0.8, 0.85);
-    this.composer.addPass(bloom);
-
-    // Events
-    const resize = () => {
-      const { clientWidth:w, clientHeight:h } = el;
-      this.camera.aspect = w / h; this.camera.updateProjectionMatrix();
-      this.renderer.setSize(w, h, false);
-      this.composer.setSize(w, h);
-    };
-    window.addEventListener('resize', resize);
-    el.addEventListener('pointermove', (e) => {
-      const rect = el.getBoundingClientRect();
-      this.mouse.set((e.clientX-rect.left)/rect.width*2-1, -((e.clientY-rect.top)/rect.height*2-1));
-    });
-    resize();
-
-    const tick = () => {
-      this.frame += 0.005;
-      // Subtle drift + parallax
-      this.stars.rotation.y += 0.0007;
-      this.camera.position.x += (this.mouse.x * 8 - this.camera.position.x) * 0.03;
-      this.camera.position.y += (this.mouse.y * 6 - this.camera.position.y) * 0.03;
-      this.camera.lookAt(0,0,0);
-      this.composer.render();
-      this.raf = requestAnimationFrame(tick);
-    };
-    tick();
+    window.addEventListener('resize', () => this.onResize());
+    this.onResize();
+    this.tick();
   }
-  ngOnDestroy(): void { cancelAnimationFrame(this.raf); this.renderer?.dispose(); }
+
+  private tick = () => {
+    this.material.uniforms.uTime.value += 0.01;
+    if (!this.reduce) {
+      this.camera.position.x += (this.mouse.x * 0.5 - this.camera.position.x) * 0.05;
+      this.camera.position.y += (this.mouse.y * 0.3 - this.camera.position.y) * 0.05;
+      this.camera.lookAt(0, 0, 0);
+    }
+    this.renderer.render(this.scene, this.camera);
+    this.raf = requestAnimationFrame(this.tick);
+  };
+
+  private onResize() {
+    const el = this.canvas.nativeElement;
+    const { clientWidth: w, clientHeight: h } = el;
+    this.camera.aspect = w / h;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(w, h, false);
+  }
+
+  private makeKnitTexture(color: string): THREE.Texture {
+    const c = document.createElement('canvas');
+    c.width = c.height = 64;
+    const ctx = c.getContext('2d')!;
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, 64, 64);
+    ctx.strokeStyle = '#d1bfae';
+    for (let y = 0; y < 64; y += 8) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(64, y+4);
+      ctx.stroke();
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(4, 4);
+    return tex;
+  }
+
+  private makeNormalTexture(): THREE.Texture {
+    const c = document.createElement('canvas');
+    c.width = c.height = 2;
+    const ctx = c.getContext('2d')!;
+    ctx.fillStyle = 'rgb(128,128,255)';
+    ctx.fillRect(0, 0, 2, 2);
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(4, 4);
+    return tex;
+  }
+
+  private makeMaskTexture(): THREE.Texture {
+    const c = document.createElement('canvas');
+    c.width = 512; c.height = 256;
+    const ctx = c.getContext('2d')!;
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0,0,c.width,c.height);
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 120px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Stichi', c.width/2, c.height/2);
+    return new THREE.CanvasTexture(c);
+  }
+
+  ngOnDestroy(): void {
+    cancelAnimationFrame(this.raf);
+    this.renderer?.dispose();
+    this.material?.dispose();
+    this.plane?.geometry.dispose();
+    this.maskTex?.dispose();
+  }
 }

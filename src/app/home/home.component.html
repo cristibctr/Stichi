@@ -1,6 +1,6 @@
 <div>
   <!-- HERO: WebGL constellation + kinetic headline -->
-  <section class="section relative text-center text-white">
+  <section #journeySection class="section relative text-center text-white">
     <app-hero-canvas class="absolute inset-0 -z-10"></app-hero-canvas>
     <div class="relative z-10 space-y-8">
       <app-kinetic-headline text="Stichi — handmade, cosmic, yours."></app-kinetic-headline>
@@ -14,7 +14,7 @@
   </section>
 
   <!-- PHILOSOPHY: reveal as you scroll -->
-  <section class="section bg-white text-center">
+  <section #journeySection class="section bg-white text-center">
     <div class="max-w-3xl mx-auto">
       <h2 class="text-4xl font-display mb-6" appScrollReveal="animate-fade-up">Clothes that feel like memories</h2>
       <p class="text-gray-600 mb-4" appScrollReveal="animate-fade-up" style="animation-delay:.1s">
@@ -27,12 +27,22 @@
   </section>
 
   <!-- HORIZONTAL STICKY GALLERY: scroll sideways through pieces -->
-  <section id="section-collection" class="section bg-neutral-50">
+  <section #journeySection id="section-collection" class="section bg-neutral-50">
     <app-horizontal-gallery [items]="featured" [add]="addToCart"></app-horizontal-gallery>
   </section>
 
+  <!-- YARN PATH TIMELINE -->
+  <section #journeySection class="section bg-white">
+    <app-yarn-timeline></app-yarn-timeline>
+  </section>
+
+  <!-- LOOM SCROLLER -->
+  <section #journeySection class="section bg-neutral-50">
+    <app-loom></app-loom>
+  </section>
+
   <!-- SUSTAINABILITY: parallax backdrop -->
-  <section class="section text-center text-white">
+  <section #journeySection class="section text-center text-white">
     <div class="absolute inset-0 -z-10">
       <img src="https://images.unsplash.com/photo-1503342452485-86ff0a968cd3?q=80&w=1600&auto=format&fit=crop" class="w-full h-full object-cover opacity-80" />
       <div class="absolute inset-0 bg-black/40"></div>
@@ -46,7 +56,7 @@
   </section>
 
   <!-- Section 5: newsletter -->
-  <section class="section bg-white">
+  <section #journeySection class="section bg-white">
     <div class="max-w-xl mx-auto text-center">
       <h4 class="text-3xl font-display mb-4">Join the thread</h4>
       <p class="text-gray-600 mb-6">Get early access to drops and behind-the-seams stories.</p>

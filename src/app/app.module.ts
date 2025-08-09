@@ -12,6 +12,8 @@ import { HeroCanvasComponent } from './hero-canvas/hero-canvas.component';
 import { CursorThreadComponent } from './cursor-thread/cursor-thread.component';
 import { KineticHeadlineComponent } from './kinetic-headline/kinetic-headline.component';
 import { HorizontalGalleryComponent } from './horizontal-gallery/horizontal-gallery.component';
+import { YarnTimelineComponent } from './yarn-timeline/yarn-timeline.component';
+import { LoomComponent } from './loom/loom.component';
 import { TiltDirective } from './directives/tilt.directive';
 import { ScrollRevealDirective } from './directives/scroll-reveal.directive';
 import { MagneticDirective } from './directives/magnetic.directive';
@@ -36,7 +38,9 @@ const routes: Routes = [
     CursorThreadComponent,
     KineticHeadlineComponent,
     HorizontalGalleryComponent,
-    MagneticDirective
+    MagneticDirective,
+    YarnTimelineComponent,
+    LoomComponent
   ],
   imports: [
     BrowserModule,
