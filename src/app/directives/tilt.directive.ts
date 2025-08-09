@@ -1,50 +1,59 @@
-import { Directive, ElementRef, HostListener, Renderer2 } from '@angular/core';
+import { Directive, ElementRef, HostBinding, HostListener } from '@angular/core';
 
 /**
- * A directive that applies a subtle 3D tilt effect to an element based on
- * the position of the mouse cursor. Moving the mouse over the element will
- * rotate it along the X and Y axes, creating an interactive experience. When
- * the mouse leaves the element, it smoothly resets back to its neutral state.
+ * Lightweight 3D tilt effect for interactive elements.
+ * Applies a subtle parallax-like tilt based on cursor position.
+ * Respects prefers-reduced-motion by disabling rotation and using a gentle scale.
  */
 @Directive({
   selector: '[appTilt]'
 })
 export class TiltDirective {
-  constructor(private el: ElementRef, private renderer: Renderer2) {}
+  private prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  @HostBinding('style.transform') transform = 'perspective(800px) rotateX(0deg) rotateY(0deg) scale(1)';
+  @HostBinding('style.transition') transition = 'transform 200ms ease';
+  @HostBinding('style.willChange') willChange = 'transform';
+  @HostBinding('style.transformStyle') transformStyle = 'preserve-3d';
+
+  constructor(private host: ElementRef<HTMLElement>) {}
 
   @HostListener('mousemove', ['$event'])
-  onMouseMove(event: MouseEvent): void {
-    const rect = this.el.nativeElement.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    const rotateX = -(y - centerY) / 20;
-    const rotateY = (x - centerX) / 20;
-    this.renderer.setStyle(
-      this.el.nativeElement,
-      'transform',
-      `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`
-    );
+  onMouseMove(e: MouseEvent): void {
+    const el = this.host.nativeElement;
+    const rect = el.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const midX = rect.width / 2;
+    const midY = rect.height / 2;
+
+    if (this.prefersReducedMotion) {
+      this.transform = 'perspective(800px) rotateX(0deg) rotateY(0deg) scale(1.02)';
+      return;
+    }
+
+    // Max rotation angles
+    const maxRot = 8; // degrees
+    const rotY = ((x - midX) / midX) * maxRot; // left/right
+    const rotX = -((y - midY) / midY) * maxRot; // up/down (invert for natural feel)
+
+    this.transform = `perspective(800px) rotateX(${rotX.toFixed(2)}deg) rotateY(${rotY.toFixed(2)}deg) scale(1.03)`;
   }
 
   @HostListener('mouseleave')
-  onMouseLeave(): void {
-    this.renderer.setStyle(
-      this.el.nativeElement,
-      'transition',
-      'transform 0.3s ease'
-    );
-    this.renderer.setStyle(
-      this.el.nativeElement,
-      'transform',
-      'perspective(800px) rotateX(0deg) rotateY(0deg)'
-    );
+  onLeave(): void {
+    this.transform = 'perspective(800px) rotateX(0deg) rotateY(0deg) scale(1)';
   }
 
-  @HostListener('mouseenter')
-  onMouseEnter(): void {
-    // Remove transition so movement feels smooth when the user enters
-    this.renderer.setStyle(this.el.nativeElement, 'transition', 'none');
+  @HostListener('mousedown')
+  onDown(): void {
+    this.transition = 'transform 80ms ease';
+    this.transform = 'perspective(800px) rotateX(0deg) rotateY(0deg) scale(0.98)';
+  }
+
+  @HostListener('mouseup')
+  onUp(): void {
+    this.transition = 'transform 200ms ease';
+    this.transform = 'perspective(800px) rotateX(0deg) rotateY(0deg) scale(1)';
   }
 }
