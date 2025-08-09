@@ -1,8 +1,6 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 import * as THREE from 'three';
-import { EffectComposer } from 'three-stdlib/examples/jsm/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three-stdlib/examples/jsm/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three-stdlib/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { EffectComposer, RenderPass, UnrealBloomPass } from 'three-stdlib';
 
 @Component({
   selector: 'app-hero-canvas',
