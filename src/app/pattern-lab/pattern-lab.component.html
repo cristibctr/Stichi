@@ -1,0 +1,25 @@
+<section class="container mx-auto py-16 px-6 space-y-8">
+  <h2 class="text-3xl font-bold">Stitch Lab</h2>
+  <form class="flex flex-wrap gap-4 items-end">
+    <label class="flex flex-col">
+      <span class="mb-1">Stitch</span>
+      <select class="border rounded p-2" [(ngModel)]="stitch" name="stitch" (change)="updatePattern()">
+        <option value="moss">Moss</option>
+        <option value="rib">Rib</option>
+        <option value="cable">Cable</option>
+      </select>
+    </label>
+    <label class="flex flex-col">
+      <span class="mb-1">Gauge</span>
+      <input type="number" class="border rounded p-2 w-24" [(ngModel)]="gauge" name="gauge" min="4" max="32" (input)="updatePattern()" />
+    </label>
+    <label class="flex flex-col">
+      <span class="mb-1">Color</span>
+      <input type="color" class="border rounded p-2 w-24" [(ngModel)]="color" name="color" (input)="updatePattern()" />
+    </label>
+  </form>
+  <div class="flex gap-8">
+    <div class="w-32 h-32 border rounded" [style.backgroundImage]="'url(' + patternUrl + ')'" [style.backgroundSize]="gauge * 4 + 'px'"></div>
+    <div class="w-40 h-56 border rounded" [style.backgroundImage]="'url(' + patternUrl + ')'" style="background-size:cover;"></div>
+  </div>
+</section>
