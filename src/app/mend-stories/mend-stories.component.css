@@ -1,0 +1,5 @@
+:host { @apply block h-full; }
+.stitch { @apply absolute w-4 h-4 -ml-2 -mt-2 rounded-full bg-secondary text-white text-[10px] flex items-center justify-center focus:outline-none focus:ring; }
+.overlay { @apply absolute inset-0 bg-black/50 flex items-center justify-center; }
+.card { @apply bg-white p-4 rounded relative max-w-xs; }
+.close { @apply absolute top-1 right-1 text-sm; }

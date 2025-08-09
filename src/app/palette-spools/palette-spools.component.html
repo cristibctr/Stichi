@@ -1,0 +1,11 @@
+<div #host class="h-full flex items-center justify-center gap-8 select-none" style="perspective:600px;">
+  <div *ngFor="let sp of spools"
+       class="spool"
+       (pointerdown)="onPointerDown(sp,$event)"
+       (pointermove)="onPointerMove($event)"
+       (pointerup)="onPointerUp($event)"
+       (pointercancel)="onPointerUp($event)"
+       [style.transform]="'rotateY(' + sp.angle + 'deg)'">
+    <div class="thread" [style.background]="getGradient(sp.hue)"></div>
+  </div>
+</div>

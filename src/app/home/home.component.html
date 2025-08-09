@@ -41,6 +41,21 @@
     <app-loom></app-loom>
   </section>
 
+  <!-- STITCH STORY: image sequence -->
+  <section #journeySection class="section bg-white">
+    <app-stitch-story></app-stitch-story>
+  </section>
+
+  <!-- PALETTE SPOOLS -->
+  <section #journeySection class="section bg-neutral-50">
+    <app-palette-spools (select)="colorPicked($event)"></app-palette-spools>
+  </section>
+
+  <!-- MEND STORIES -->
+  <section #journeySection class="section bg-white">
+    <app-mend-stories></app-mend-stories>
+  </section>
+
   <!-- SUSTAINABILITY: parallax backdrop -->
   <section #journeySection class="section text-center text-white">
     <div class="absolute inset-0 -z-10">

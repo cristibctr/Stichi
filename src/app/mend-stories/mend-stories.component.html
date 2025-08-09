@@ -1,0 +1,18 @@
+<div #host class="relative h-full flex items-center justify-center">
+  <img src="https://via.placeholder.com/600x400?text=Garment" alt="Garment with repair marks" class="max-w-full" />
+
+  <ng-container *ngFor="let m of mends">
+    <button class="stitch" [style.left.%]="m.x" [style.top.%]="m.y"
+            (click)="open(m)" (focus)="open(m)" [attr.aria-label]="m.title">
+      ✚
+    </button>
+  </ng-container>
+
+  <div *ngIf="active" class="overlay" (click)="close()">
+    <div class="card" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+      <button class="close" (click)="close()" aria-label="Close">×</button>
+      <h4 class="font-bold mb-2">{{active.title}}</h4>
+      <p class="text-sm">{{active.story}}</p>
+    </div>
+  </div>
+</div>

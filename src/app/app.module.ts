@@ -15,6 +15,9 @@ import { KineticHeadlineComponent } from './kinetic-headline/kinetic-headline.co
 import { HorizontalGalleryComponent } from './horizontal-gallery/horizontal-gallery.component';
 import { YarnTimelineComponent } from './yarn-timeline/yarn-timeline.component';
 import { LoomComponent } from './loom/loom.component';
+import { StitchStoryComponent } from './stitch-story/stitch-story.component';
+import { PaletteSpoolsComponent } from './palette-spools/palette-spools.component';
+import { MendStoriesComponent } from './mend-stories/mend-stories.component';
 import { TiltDirective } from './directives/tilt.directive';
 import { ScrollRevealDirective } from './directives/scroll-reveal.directive';
 import { MagneticDirective } from './directives/magnetic.directive';
@@ -45,6 +48,9 @@ const routes: Routes = [
     MagneticDirective,
     YarnTimelineComponent,
     LoomComponent,
+    StitchStoryComponent,
+    PaletteSpoolsComponent,
+    MendStoriesComponent,
     PatternLabComponent
   ],
   imports: [
