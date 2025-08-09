@@ -1,42 +1,18 @@
-<!-- Primary navigation bar -->
-<nav class="bg-white shadow-md fixed w-full z-50">
-  <div class="container mx-auto px-6 py-4 flex items-center justify-between">
-    <a routerLink="/" class="flex items-center gap-2">
-      <img src="assets/logo.jpg" alt="Stichi logo" class="w-8 h-8" />
-      <span class="text-2xl font-semibold">Stichi</span>
+<!-- Transparent nav that sits over the hero canvas -->
+<nav class="fixed inset-x-0 top-0 z-50 mix-blend-difference text-white">
+  <div class="container mx-auto px-6 py-6 flex items-center justify-between">
+    <a routerLink="/" class="flex items-center gap-3">
+      <img src="assets/logo.jpg" alt="Stichi logo" class="w-8 h-8 rounded-full ring-2 ring-white/50" />
+      <span class="text-2xl font-display tracking-tight">Stichi</span>
     </a>
-    <!-- Mobile menu button -->
-    <button class="md:hidden text-gray-700 focus:outline-none" (click)="isMenuOpen = !isMenuOpen">
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-        <path *ngIf="!isMenuOpen" d="M4 6h16M4 12h16M4 18h16"></path>
-        <path *ngIf="isMenuOpen" d="M6 18L18 6M6 6l12 12"></path>
-      </svg>
-    </button>
-    <!-- Desktop navigation -->
-    <ul class="hidden md:flex space-x-8 text-lg font-medium">
-      <li><a routerLink="/" routerLinkActive="text-primary" [routerLinkActiveOptions]="{ exact: true }" class="hover:text-primary transition-colors">Home</a></li>
-      <li><a routerLink="/products" routerLinkActive="text-primary" class="hover:text-primary transition-colors">Products</a></li>
-      <li><a routerLink="/about" routerLinkActive="text-primary" class="hover:text-primary transition-colors">About</a></li>
-    </ul>
-  </div>
-  <!-- Mobile navigation -->
-  <div *ngIf="isMenuOpen" class="md:hidden bg-white border-t">
-    <ul class="flex flex-col px-6 py-4 space-y-4 text-lg">
-      <li><a routerLink="/" (click)="isMenuOpen = false" class="hover:text-primary transition-colors">Home</a></li>
-      <li><a routerLink="/products" (click)="isMenuOpen = false" class="hover:text-primary transition-colors">Products</a></li>
-      <li><a routerLink="/about" (click)="isMenuOpen = false" class="hover:text-primary transition-colors">About</a></li>
+    <ul class="hidden md:flex gap-8 items-center">
+      <li><a appMagnetic routerLink="/products" class="opacity-90 hover:opacity-100">Shop</a></li>
+      <li><a appMagnetic routerLink="/about" class="opacity-90 hover:opacity-100">About</a></li>
+      <li><a appMagnetic routerLink="/products" class="px-4 py-2 rounded-full bg-white/10 ring-1 ring-white/40 backdrop-blur text-white">Explore</a></li>
     </ul>
   </div>
 </nav>
 
-<!-- Main content area offset by nav height -->
-<div class="pt-24">
-  <router-outlet></router-outlet>
-</div>
-
-<!-- Footer -->
-<footer class="bg-gray-100 py-8 mt-16">
-  <div class="container mx-auto px-6 text-center text-gray-600">
-    <p>&copy; {{ currentYear }} Stichi. All rights reserved.</p>
-  </div>
-</footer>
+<router-outlet></router-outlet>
+<!-- custom thread cursor -->
+<app-cursor-thread></app-cursor-thread>

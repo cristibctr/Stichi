@@ -10,15 +10,27 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        display: ['Playfair Display', 'serif'],
+        sans: ['Inter', 'system-ui', 'sans-serif']
+      },
       colors: {
-        primary: '#6b705c', // earthy green
-        secondary: '#e5989b', // soft pink
-        accent: '#b7b7a4', // warm beige
+        primary: '#6b705c',
+        secondary: '#e5989b',
+        accent: '#b7b7a4',
+        ink: '#0b0b0b'
+      },
+      keyframes: {
+        'fade-up': { from: { opacity: '0', transform: 'translateY(24px)' }, to: { opacity: '1', transform: 'translateY(0)' } },
+        'spin-slow': { from: { transform: 'rotate(0deg)' }, to: { transform: 'rotate(360deg)' } },
+        'marquee': { from: { transform: 'translateX(0)' }, to: { transform: 'translateX(-50%)' } }
       },
       animation: {
-        'pulse-slow': 'pulse 4s infinite',
+        'fade-up': 'fade-up 1s ease-out forwards',
+        'spin-slow': 'spin-slow 40s linear infinite',
+        'marquee': 'marquee 40s linear infinite'
       }
-    },
+    }
   },
-  plugins: [],
-};
+  plugins: []
+}

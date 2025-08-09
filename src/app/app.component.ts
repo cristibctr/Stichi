@@ -5,9 +5,5 @@ import { Component } from '@angular/core';
   templateUrl: './app.component.html'
 })
 export class AppComponent {
-  /**
-   * Controls the visibility of the mobile navigation menu.
-   */
-  isMenuOpen = false;
-  currentYear = new Date().getFullYear();
+  constructor() {}
 }
