@@ -1,0 +1,15 @@
+<div #root class="relative h-[300vh]">
+  <div class="sticky top-0 h-screen overflow-hidden">
+    <div class="absolute inset-0 bg-[repeating-linear-gradient(to_right,#d1bfae_0_2px,transparent_2px_80px)]"></div>
+    <div class="relative h-full flex items-center justify-center">
+      <div class="flex w-full h-full" *ngFor="let p of panels; let i = index" [style.transform]="xFor(i)" class="absolute inset-0 transition-transform">
+        <div class="min-w-full flex items-center justify-center">
+          <div class="bg-white/80 backdrop-blur p-6 rounded shadow max-w-sm text-center">
+            <h4 class="font-display text-2xl mb-2">{{p.title}}</h4>
+            <p class="text-sm text-gray-700">{{p.copy}}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

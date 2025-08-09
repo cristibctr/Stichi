@@ -1,0 +1,16 @@
+<div #container class="relative h-[200vh]">
+  <svg class="sticky top-0 h-screen w-full overflow-visible" viewBox="0 0 200 800">
+    <path #path d="M100 0 C100 150 40 200 100 300 S160 450 100 600 S40 750 100 800" stroke="#d1bfae" stroke-width="4" fill="none" [attr.stroke-dashoffset]="dashoffset"></path>
+    <ng-container *ngFor="let m of milestones">
+      <g [attr.transform]="'translate('+m.x+','+m.y+')'">
+        <circle r="6" class="fill-secondary cursor-pointer" tabindex="0" role="button" (click)="toggle(m)" (focus)="m.open=true" (blur)="m.open=false" [attr.aria-expanded]="m.open"></circle>
+        <foreignObject *ngIf="m.open" x="8" y="-40" width="160" height="80">
+          <div class="bg-white p-2 rounded shadow text-xs">
+            <strong class="block mb-1">{{m.title}}</strong>
+            <p>{{m.copy}}</p>
+          </div>
+        </foreignObject>
+      </g>
+    </ng-container>
+  </svg>
+</div>
