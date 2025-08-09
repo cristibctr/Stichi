@@ -88,6 +88,10 @@ export class HomeComponent implements OnInit, AfterViewInit {
     }
   }
 
+  colorPicked(hex: string) {
+    console.log('Selected color', hex);
+  }
+
   ngAfterViewInit(): void {
     this.sections.forEach((s) => this.journey.registerSection(s.nativeElement));
   }

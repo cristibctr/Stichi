@@ -1,0 +1,14 @@
+<div #host class="relative h-[200vh]">
+  <div class="sticky top-0 h-screen w-full">
+    <ng-container *ngIf="!reduce; else reduceTpl">
+      <img [src]="frames[current]" class="w-full h-full object-cover" alt="story frame" />
+    </ng-container>
+    <ng-template #reduceTpl>
+      <div class="relative w-full h-full">
+        <img *ngFor="let src of [frames[0], frames[Math.floor(frames.length/2)], frames[frames.length-1]]; let i = index"
+             [src]="src" class="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
+             [style.opacity]="currentReduce === i ? 1 : 0" alt="story frame" />
+      </div>
+    </ng-template>
+  </div>
+</div>
