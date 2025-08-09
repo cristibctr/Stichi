@@ -11,13 +11,11 @@ export class LenisService {
     this.zone.runOutsideAngular(() => {
       this.lenis = new Lenis({
         smoothWheel: true,
-        lerp: 0.1
+        lerp: 0.1,
+        autoRaf: true
       });
-      const raf = (time: number) => {
-        this.lenis?.raf(time);
-        requestAnimationFrame(raf);
-      };
-      requestAnimationFrame(raf);
+      // ensure Lenis is running
+      this.lenis.start();
     });
   }
 
