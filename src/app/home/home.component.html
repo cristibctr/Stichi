@@ -1,0 +1,85 @@
+<!--
+  The home page is designed as a multi‑section journey. Each section fills
+  the viewport height and snaps into place as the user scrolls. The
+  `scroll-smooth` class provides a fluid transition between sections. The
+  `snap-y` and `snap-mandatory` classes ensure that scrolling stops at
+  each section, creating a guided narrative.
+-->
+<div class="min-h-screen">
+  <!-- Hero Section: introduction and call to action -->
+  <section class="relative min-h-screen flex flex-col items-center justify-center text-center snap-start px-6">
+    <!-- Swirling decorative star in the background -->
+    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+      <div class="star bg-secondary/20 w-48 h-48 md:w-72 md:h-72 animate-spin-slow"></div>
+    </div>
+    <img src="assets/logo.jpg" alt="Stichi logo" class="w-24 md:w-32 mb-6 relative z-10" />
+    <h1 class="text-6xl md:text-8xl font-serif font-semibold mb-4 tracking-tight relative z-10">
+      Stichi
+    </h1>
+    <p class="text-2xl md:text-3xl font-light mb-8 max-w-xl relative z-10">
+      A Cosmic Journey in Handmade Couture
+    </p>
+    <button class="relative z-10" (click)="scrollToSection('section-collection')">
+      <div appTilt class="bg-secondary text-white px-8 py-4 rounded-full shadow-lg cursor-pointer inline-block transition-transform duration-300 hover:scale-105">
+        Start Exploring
+      </div>
+    </button>
+    <!-- Downward scroll indicator -->
+    <span class="absolute bottom-10 flex flex-col items-center animate-bounce opacity-70">
+      <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 5v14M5 12l7 7 7-7" />
+      </svg>
+    </span>
+  </section>
+
+  <!-- Philosophy Section -->
+  <section id="section-philosophy" class="min-h-screen flex flex-col md:flex-row items-center justify-center px-6 snap-start">
+    <!-- Text content with scroll reveal animation -->
+    <div class="md:w-1/2 p-6" appScrollReveal>
+      <h2 class="text-4xl font-bold mb-4">Crafted with Intention</h2>
+      <p class="text-gray-700 text-lg leading-relaxed mb-4">At Stichi, our garments begin with a story. Every piece is thoughtfully designed and hand stitched by artisans who honour generations of craftsmanship. We blend cosmic motifs with earthly materials to create wearable works of art.</p>
+      <p class="text-gray-700 text-lg leading-relaxed">Explore the process behind our creations and feel the energy woven into each thread.</p>
+    </div>
+    <!-- Decorative star graphic -->
+    <div class="md:w-1/2 flex items-center justify-center p-6 relative">
+      <div class="star bg-primary/30 w-48 h-48 md:w-64 md:h-64 animate-spin-slow"></div>
+    </div>
+  </section>
+
+  <!-- Collection Section: horizontal snapping carousel of products -->
+  <section id="section-collection" class="min-h-screen flex flex-col items-center justify-center px-6 snap-start">
+    <h2 class="text-4xl font-bold mb-8" appScrollReveal>Discover the Collection</h2>
+    <div class="w-full overflow-x-auto flex space-x-6 snap-x snap-mandatory pb-4">
+      <div *ngFor="let product of products" class="min-w-[250px] snap-start bg-white rounded-2xl shadow-xl overflow-hidden transform transition-transform hover:-translate-y-2">
+        <img [src]="product.image" [alt]="product.name" class="w-full h-60 object-cover" />
+        <div class="p-4">
+          <h3 class="text-xl font-semibold mb-1">{{ product.name }}</h3>
+          <p class="text-gray-600 text-sm mb-2">{{ product.description }}</p>
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-primary font-bold">{{ product.price | currency:'EUR' }}</span>
+            <button (click)="addToCart(product)" class="bg-primary text-white px-3 py-1 rounded-full text-sm hover:bg-opacity-90">Add</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sustainability Section with parallax background -->
+  <section id="section-sustainability" class="min-h-screen flex flex-col md:flex-row items-center justify-center px-6 bg-fixed bg-center bg-cover snap-start" style="background-image: url('https://picsum.photos/seed/nature-texture/1600/900');">
+    <div class="bg-white/80 backdrop-blur p-8 rounded-lg max-w-lg" appScrollReveal>
+      <h2 class="text-4xl font-bold mb-4">Sustainability at Heart</h2>
+      <p class="text-gray-700 text-lg leading-relaxed mb-4">We source only the finest natural fibres, supporting local farmers and reducing our environmental footprint. Our slow fashion ethos means creating timeless pieces that last, minimizing waste and celebrating the beauty of imperfection.</p>
+      <p class="text-gray-700 text-lg leading-relaxed">Join us in making conscious choices—both for your wardrobe and our planet.</p>
+    </div>
+  </section>
+
+  <!-- Contact / Newsletter Section -->
+  <section id="section-contact" class="min-h-screen flex flex-col items-center justify-center px-6 snap-start">
+    <h2 class="text-4xl font-bold mb-4" appScrollReveal>Stay Connected</h2>
+    <p class="text-gray-700 text-lg max-w-xl mb-6" appScrollReveal>Subscribe to our newsletter to get exclusive previews, behind‑the‑scenes stories, and special offers directly to your inbox.</p>
+    <form class="w-full max-w-md space-y-4" appScrollReveal (submit)="$event.preventDefault();">
+      <input type="email" placeholder="Your email address" class="w-full p-4 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary" />
+      <button type="submit" class="w-full bg-secondary text-white py-3 rounded-lg hover:bg-opacity-90 transition-colors">Subscribe</button>
+    </form>
+  </section>
+</div>
