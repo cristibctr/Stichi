@@ -8,8 +8,13 @@ import { AppComponent } from './app.component';
 import { HomeComponent } from './home/home.component';
 import { ProductsComponent } from './products/products.component';
 import { AboutComponent } from './about/about.component';
+import { HeroCanvasComponent } from './hero-canvas/hero-canvas.component';
+import { CursorThreadComponent } from './cursor-thread/cursor-thread.component';
+import { KineticHeadlineComponent } from './kinetic-headline/kinetic-headline.component';
+import { HorizontalGalleryComponent } from './horizontal-gallery/horizontal-gallery.component';
 import { TiltDirective } from './directives/tilt.directive';
 import { ScrollRevealDirective } from './directives/scroll-reveal.directive';
+import { MagneticDirective } from './directives/magnetic.directive';
 import { ApiService } from './services/api.service';
 
 const routes: Routes = [
@@ -26,7 +31,12 @@ const routes: Routes = [
     ProductsComponent,
     AboutComponent,
     TiltDirective,
-    ScrollRevealDirective
+    ScrollRevealDirective,
+    HeroCanvasComponent,
+    CursorThreadComponent,
+    KineticHeadlineComponent,
+    HorizontalGalleryComponent,
+    MagneticDirective
   ],
   imports: [
     BrowserModule,

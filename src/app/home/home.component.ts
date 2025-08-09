@@ -18,7 +18,7 @@ export class HomeComponent implements OnInit {
    * application this would be loaded from a backend API; here we define
    * it statically to illustrate the layout.
    */
-  products: any[] = [];
+  featured: any[] = [];
 
   constructor(private api: ApiService) {}
 
@@ -26,7 +26,7 @@ export class HomeComponent implements OnInit {
     // Define a few sample products for the horizontal carousel. You may
     // replace these with a call to this.api.getProducts() when a backend
     // becomes available.
-    this.products = [
+    this.featured = [
       {
         id: 1,
         name: 'Pastel Sweater',
@@ -62,7 +62,7 @@ export class HomeComponent implements OnInit {
    * Adds a product to the shopping cart by delegating to the API service.
    * @param product The selected product
    */
-  addToCart(product: any): void {
+  addToCart = (product: any): void => {
     this.api.addToCart(product.id).subscribe({
       next: () => {
         alert(`${product.name} added to cart!`);
@@ -71,7 +71,7 @@ export class HomeComponent implements OnInit {
         alert('Unable to add to cart at this time.');
       }
     });
-  }
+  };
 
   /**
    * Smoothly scrolls to a section within the home page. The sections have
