@@ -24,6 +24,7 @@ import { MagneticDirective } from './directives/magnetic.directive';
 import { ApiService } from './services/api.service';
 import { PatternLabComponent } from './pattern-lab/pattern-lab.component';
 import { FabricMicroscopeComponent } from './fabric-microscope/fabric-microscope.component';
+import { RowCounterComponent } from './row-counter/row-counter.component';
 
 const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -53,7 +54,8 @@ const routes: Routes = [
     PaletteSpoolsComponent,
     MendStoriesComponent,
     PatternLabComponent,
-    FabricMicroscopeComponent
+    FabricMicroscopeComponent,
+    RowCounterComponent
   ],
   imports: [
     BrowserModule,
