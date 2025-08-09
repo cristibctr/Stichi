@@ -5,11 +5,36 @@
       <img src="assets/logo.jpg" alt="Stichi logo" class="w-8 h-8 rounded-full ring-2 ring-white/50" />
       <span class="text-2xl font-display tracking-tight">Stichi</span>
     </a>
-    <ul class="hidden md:flex gap-8 items-center">
-      <li><a appMagnetic routerLink="/products" class="opacity-90 hover:opacity-100">Shop</a></li>
-      <li><a appMagnetic routerLink="/about" class="opacity-90 hover:opacity-100">About</a></li>
-      <li><a appMagnetic routerLink="/products" class="px-4 py-2 rounded-full bg-white/10 ring-1 ring-white/40 backdrop-blur text-white">Explore</a></li>
-    </ul>
+    <div class="flex items-center gap-6">
+      <ul class="hidden md:flex gap-8 items-center">
+        <li><a appMagnetic routerLink="/products" class="opacity-90 hover:opacity-100">Shop</a></li>
+        <li><a appMagnetic routerLink="/about" class="opacity-90 hover:opacity-100">About</a></li>
+        <li><a appMagnetic routerLink="/products" class="px-4 py-2 rounded-full bg-white/10 ring-1 ring-white/40 backdrop-blur text-white">Explore</a></li>
+      </ul>
+      <div class="relative">
+        <button type="button" (click)="toggleSettings()" aria-label="Settings" class="p-2 rounded-md hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">
+          ⚙
+        </button>
+        <div *ngIf="showSettings" class="absolute right-0 mt-2 w-56 p-4 rounded-lg bg-white/90 text-gray-900 shadow-lg text-sm">
+          <label class="block mb-2">
+            <span class="block text-xs font-medium">Reduce motion</span>
+            <select class="mt-1 w-full bg-white border border-gray-300 rounded" [ngModel]="settings.value.reduceMotion" (ngModelChange)="settings.update({reduceMotion: $event})" aria-label="Reduce motion">
+              <option value="auto">Auto</option>
+              <option value="on">On</option>
+              <option value="off">Off</option>
+            </select>
+          </label>
+          <label class="flex items-center gap-2 mb-2">
+            <input type="checkbox" [checked]="settings.value.mute" (change)="settings.update({mute: $event.target.checked})" aria-label="Mute sounds" />
+            <span>Mute sounds</span>
+          </label>
+          <label class="flex items-center gap-2">
+            <input type="checkbox" [checked]="settings.value.showNativeCursorOnKeyboard" (change)="settings.update({showNativeCursorOnKeyboard: $event.target.checked})" aria-label="Show native cursor when using keyboard" />
+            <span>Show cursor on Tab</span>
+          </label>
+        </div>
+      </div>
+    </div>
   </div>
 </nav>
 

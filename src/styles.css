@@ -1,3 +1,4 @@
+@import 'lenis/dist/lenis.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -24,6 +25,7 @@ body {
 /* Custom cursor hidden; we draw our own thread */
 body { cursor: none; }
 .show-native-cursor { cursor: auto; }
+.show-native-cursor app-cursor-thread { display: none; }
 
 .glow-text {
   text-shadow: 0 4px 30px rgba(229, 152, 155, .45);

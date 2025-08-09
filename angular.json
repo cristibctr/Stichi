@@ -93,5 +93,8 @@
       }
     }
   },
-  "defaultProject": "stichi"
+  "defaultProject": "stichi",
+  "cli": {
+    "analytics": false
+  }
 }
