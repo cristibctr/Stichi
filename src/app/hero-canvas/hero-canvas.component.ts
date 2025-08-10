@@ -1,173 +1,293 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild, ChangeDetectionStrategy, NgZone, Renderer2 } from '@angular/core';
 import * as THREE from 'three';
 import { SettingsService } from '../services/settings.service';
 
 @Component({
   selector: 'app-hero-canvas',
-  template: `<div class="absolute inset-0"><canvas #c class="w-full h-full block"></canvas></div>`
+  templateUrl: './hero-canvas.component.html',
+  styleUrls: ['./hero-canvas.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HeroCanvasComponent implements AfterViewInit, OnDestroy {
-  @ViewChild('c', { static: true }) canvas!: ElementRef<HTMLCanvasElement>;
-  private renderer!: THREE.WebGLRenderer;
-  private scene!: THREE.Scene;
-  private camera!: THREE.PerspectiveCamera;
-  private material!: THREE.ShaderMaterial;
-  private plane!: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>;
-  private maskTex!: THREE.Texture;
-  private raf = 0;
-  private mouse = new THREE.Vector2();
-  private reduce = false;
+  @ViewChild('canvas', { static: false }) canvasRef?: ElementRef<HTMLCanvasElement>;
+  @ViewChild('headline', { static: false }) headlineRef?: ElementRef<SVGSVGElement>;
+  @ViewChild('cta', { static: false }) ctaRef?: ElementRef<HTMLButtonElement>;
+  @ViewChild('scrollCue', { static: false }) scrollCueRef?: ElementRef<HTMLDivElement>;
 
-  constructor(private settings: SettingsService) {}
+  staticMode = false;
+
+  private renderer?: THREE.WebGLRenderer;
+  private scene = new THREE.Scene();
+  private camera?: THREE.PerspectiveCamera;
+  private fg?: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>;
+  private bg?: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>;
+  private particles?: THREE.Points<THREE.BufferGeometry, THREE.PointsMaterial>;
+  private raf = 0;
+  private reduce = false;
+  private mouse = new THREE.Vector2();
+  private light = new THREE.Vector2(0.4, 0.6);
+  private intersectionObserver?: IntersectionObserver;
+
+  constructor(private settings: SettingsService, private ngZone: NgZone, private renderer2: Renderer2) {}
 
   ngAfterViewInit(): void {
-    const el = this.canvas.nativeElement;
+    this.setupCTA();
+    this.initHeadline();
+    this.initScrollCue();
+
     this.reduce = this.settings.prefersReducedMotion();
+    const canvas = this.canvasRef?.nativeElement;
+    if (this.reduce || !canvas) {
+      this.staticMode = true;
+      return;
+    }
 
-    this.renderer = new THREE.WebGLRenderer({ canvas: el, antialias: true });
+    try {
+      this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    } catch {
+      this.staticMode = true;
+      return;
+    }
+
     this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-    this.renderer.setSize(el.clientWidth, el.clientHeight, false);
+    const rect = canvas.getBoundingClientRect();
+    const width = Math.max(1, Math.floor(rect.width || canvas.clientWidth || 1));
+    const height = Math.max(1, Math.floor(rect.height || canvas.clientHeight || 1));
+    this.renderer.setSize(width, height, false);
 
-    this.scene = new THREE.Scene();
-    this.camera = new THREE.PerspectiveCamera(45, el.clientWidth / el.clientHeight, 0.1, 100);
+    this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
     this.camera.position.set(0, 0, 5);
 
-    const geo = new THREE.PlaneGeometry(4, 2.5, 128, 64);
-    const colorTex = this.makeKnitTexture('#e6d5c3');
-    const normalTex = this.makeNormalTexture();
-    this.maskTex = this.makeMaskTexture();
+    const loader = new THREE.TextureLoader();
+    const colorTex = loader.load('assets/knit/knit_color.jpg');
+    const normalTex = loader.load('assets/knit/knit_normal.jpg');
+    const maskTex = loader.load('assets/knit/stichi_mask.png');
 
-    this.material = new THREE.ShaderMaterial({
+    const geo = new THREE.PlaneGeometry(4, 2.5, 128, 64);
+
+    const createMaterial = (offset: number) => new THREE.ShaderMaterial({
       uniforms: {
         uTime: { value: 0 },
-        uWind: { value: this.reduce ? 0.0 : 0.25 },
-        uIntensity: { value: 0.4 },
         uColor: { value: colorTex },
         uNormal: { value: normalTex },
-        uMask: { value: this.maskTex },
-        uGloss: { value: 0.3 }
+        uMask: { value: maskTex },
+        uLight: { value: new THREE.Vector2(0.4, 0.6) },
+        uRipplePos: { value: new THREE.Vector2(-10, -10) },
+        uRippleStrength: { value: 0 },
+        uTugPos: { value: new THREE.Vector2(-10, -10) },
+        uTugStrength: { value: 0 },
+        uOffset: { value: offset }
       },
       vertexShader: `
-        uniform float uTime; 
-        uniform float uWind; 
-        uniform float uIntensity; 
-        varying vec2 vUv; 
+        uniform float uTime;
+        uniform float uOffset;
+        uniform sampler2D uMask;
+        uniform vec2 uRipplePos;
+        uniform float uRippleStrength;
+        uniform vec2 uTugPos;
+        uniform float uTugStrength;
+        varying vec2 vUv;
         void main(){
-          vUv = uv; 
-          vec3 pos = position; 
-          float n = sin(pos.x*3.0 + uTime*0.5) * sin(pos.y*2.0 + uTime*0.3);
-          pos.z += n * uIntensity; 
-          pos.z += sin((pos.x+pos.y+uTime*0.2)*2.0) * uWind; 
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(pos,1.0); 
+          vUv = uv;
+          vec3 pos = position;
+          float wave = sin(pos.x*2.0 + uTime*0.4 + uOffset)*0.15;
+          wave += sin(pos.y*1.5 + uTime*0.3 + uOffset)*0.15;
+          pos.z += wave;
+          float mask = texture2D(uMask, vUv).r;
+          pos.z += mask*0.02;
+          vec2 toRipple = pos.xy - uRipplePos;
+          float d = length(toRipple);
+          pos.z += uRippleStrength * sin(10.0*d - uTime*4.0) * exp(-4.0*d);
+          vec2 toTug = pos.xy - uTugPos;
+          float dt = length(toTug);
+          pos.xy += toTug * uTugStrength * exp(-4.0*dt);
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(pos,1.0);
         }
       `,
       fragmentShader: `
-        uniform sampler2D uColor; 
-        uniform sampler2D uNormal; 
-        uniform sampler2D uMask; 
-        uniform float uGloss; 
-        varying vec2 vUv; 
+        uniform sampler2D uColor;
+        uniform sampler2D uNormal;
+        uniform vec2 uLight;
+        varying vec2 vUv;
         void main(){
-          vec3 color = texture2D(uColor, vUv*4.0).rgb; 
-          vec3 nrm = texture2D(uNormal, vUv*4.0).xyz*2.0-1.0; 
-          vec3 lightDir = normalize(vec3(0.4,0.6,1.0)); 
-          float diff = 0.6 + 0.4 * dot(nrm, lightDir); 
-          float spec = pow(max(dot(reflect(-lightDir, nrm), vec3(0,0,1)),0.0), 16.0)*uGloss; 
-          float mask = texture2D(uMask, vUv).r; 
-          color = mix(color*0.7, color, 1.0-mask); 
-          spec *= (1.0-mask); 
-          gl_FragColor = vec4(color*diff + spec, 1.0); 
+          vec3 base = texture2D(uColor, vUv*4.0).rgb;
+          vec3 nrm = texture2D(uNormal, vUv*4.0).xyz*2.0-1.0;
+          vec3 lightDir = normalize(vec3(uLight,1.0));
+          float diff = 0.6 + 0.4*dot(nrm, lightDir);
+          gl_FragColor = vec4(base*diff,1.0);
         }
       `
     });
 
-    this.plane = new THREE.Mesh(geo, this.material);
-    this.scene.add(this.plane);
+    this.fg = new THREE.Mesh(geo, createMaterial(0));
+    this.bg = new THREE.Mesh(geo, createMaterial(1.0));
+    this.bg.position.z = -0.05;
+    this.scene.add(this.bg, this.fg);
 
-    if (!this.reduce) {
-      el.addEventListener('pointermove', (e) => {
-        const rect = el.getBoundingClientRect();
-        this.mouse.set(
-          (e.clientX - rect.left) / rect.width * 2 - 1,
-          -((e.clientY - rect.top) / rect.height * 2 - 1)
-        );
-      });
+    const pGeo = new THREE.BufferGeometry();
+    const pCount = 80;
+    const positions: number[] = [];
+    for (let i = 0; i < pCount; i++) {
+      positions.push((Math.random() - 0.5) * 4);
+      positions.push((Math.random() - 0.5) * 2.5);
+      positions.push(Math.random() * 0.5);
     }
+    pGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    const pMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.02, transparent: true, opacity: 0.6 });
+    this.particles = new THREE.Points(pGeo, pMat);
+    this.scene.add(this.particles);
+
+    canvas.addEventListener('pointermove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width * 2 - 1;
+      const y = -((e.clientY - rect.top) / rect.height * 2 - 1);
+      this.mouse.set(x, y);
+      this.light.set(x * 0.5 + 0.5, y * 0.5 + 0.5);
+      (this.fg!.material.uniforms.uLight.value as THREE.Vector2).copy(this.light);
+      (this.bg!.material.uniforms.uLight.value as THREE.Vector2).copy(this.light);
+    });
 
     window.addEventListener('resize', () => this.onResize());
     this.onResize();
-    this.tick();
+    this.observeVisibility();
+    this.ngZone.runOutsideAngular(() => this.tick());
+  }
+
+  private observeVisibility() {
+    const canvas = this.canvasRef?.nativeElement;
+    if (!canvas) return;
+    this.intersectionObserver = new IntersectionObserver((entries) => {
+      const entry = entries[0];
+      if (entry.isIntersecting) {
+        this.tick();
+      } else {
+        cancelAnimationFrame(this.raf);
+      }
+    });
+    this.intersectionObserver.observe(canvas);
   }
 
   private tick = () => {
-    this.material.uniforms.uTime.value += 0.01;
-    if (!this.reduce) {
-      this.camera.position.x += (this.mouse.x * 0.5 - this.camera.position.x) * 0.05;
-      this.camera.position.y += (this.mouse.y * 0.3 - this.camera.position.y) * 0.05;
-      this.camera.lookAt(0, 0, 0);
+    if (!this.renderer || !this.camera || !this.fg || !this.bg) return;
+    this.fg.material.uniforms.uTime.value += 0.01;
+    this.bg.material.uniforms.uTime.value += 0.008;
+    this.fg.material.uniforms.uRippleStrength.value *= 0.95;
+    this.bg.material.uniforms.uRippleStrength.value *= 0.95;
+    this.fg.material.uniforms.uTugStrength.value *= 0.9;
+    this.bg.material.uniforms.uTugStrength.value *= 0.9;
+
+    if (this.particles) {
+      const pos = this.particles.geometry.attributes['position'] as THREE.BufferAttribute;
+      for (let i = 0; i < pos.count; i++) {
+        pos.setY(i, pos.getY(i) + 0.0005);
+        if (pos.getY(i) > 1.25) pos.setY(i, -1.25);
+      }
+      pos.needsUpdate = true;
     }
+
     this.renderer.render(this.scene, this.camera);
     this.raf = requestAnimationFrame(this.tick);
   };
 
   private onResize() {
-    const el = this.canvas.nativeElement;
-    const { clientWidth: w, clientHeight: h } = el;
+    if (!this.renderer || !this.camera || !this.canvasRef) return;
+    const el = this.canvasRef.nativeElement;
+    const rect = el.getBoundingClientRect();
+    const w = Math.max(1, Math.floor(rect.width || el.clientWidth || 1));
+    const h = Math.max(1, Math.floor(rect.height || el.clientHeight || 1));
+    if (h === 0 || w === 0) return; // avoid invalid aspect
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h, false);
   }
 
-  private makeKnitTexture(color: string): THREE.Texture {
-    const c = document.createElement('canvas');
-    c.width = c.height = 64;
-    const ctx = c.getContext('2d')!;
-    ctx.fillStyle = color;
-    ctx.fillRect(0, 0, 64, 64);
-    ctx.strokeStyle = '#d1bfae';
-    for (let y = 0; y < 64; y += 8) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(64, y+4);
-      ctx.stroke();
-    }
-    const tex = new THREE.CanvasTexture(c);
-    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(4, 4);
-    return tex;
+  private triggerRipple(vec: THREE.Vector2) {
+    if (!this.fg || !this.bg) return;
+    (this.fg.material.uniforms.uRipplePos.value as THREE.Vector2).copy(vec);
+    (this.bg.material.uniforms.uRipplePos.value as THREE.Vector2).copy(vec);
+    this.fg.material.uniforms.uRippleStrength.value = 0.15;
+    this.bg.material.uniforms.uRippleStrength.value = 0.1;
   }
 
-  private makeNormalTexture(): THREE.Texture {
-    const c = document.createElement('canvas');
-    c.width = c.height = 2;
-    const ctx = c.getContext('2d')!;
-    ctx.fillStyle = 'rgb(128,128,255)';
-    ctx.fillRect(0, 0, 2, 2);
-    const tex = new THREE.CanvasTexture(c);
-    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(4, 4);
-    return tex;
+  private triggerTug(vec: THREE.Vector2) {
+    if (!this.fg || !this.bg) return;
+    (this.fg.material.uniforms.uTugPos.value as THREE.Vector2).copy(vec);
+    (this.bg.material.uniforms.uTugPos.value as THREE.Vector2).copy(vec);
+    this.fg.material.uniforms.uTugStrength.value = 0.15;
+    this.bg.material.uniforms.uTugStrength.value = 0.1;
   }
 
-  private makeMaskTexture(): THREE.Texture {
-    const c = document.createElement('canvas');
-    c.width = 512; c.height = 256;
-    const ctx = c.getContext('2d')!;
-    ctx.fillStyle = 'black';
-    ctx.fillRect(0,0,c.width,c.height);
-    ctx.fillStyle = 'white';
-    ctx.font = 'bold 120px serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('Stichi', c.width/2, c.height/2);
-    return new THREE.CanvasTexture(c);
+  private setupCTA() {
+    const btn = this.ctaRef?.nativeElement;
+    const canvas = this.canvasRef?.nativeElement;
+    if (!btn) return;
+    const audio = new Audio('assets/audio/needle_ping.wav');
+
+    btn.addEventListener('pointerenter', (e: PointerEvent) => {
+      audio.currentTime = 0;
+      void audio.play();
+      if (canvas) {
+        const pos = this.eventToPlane(e);
+        this.triggerRipple(pos);
+      }
+    });
+    btn.addEventListener('pointermove', (e: PointerEvent) => {
+      const rect = btn.getBoundingClientRect();
+      const strength = 0.3;
+      const x = e.clientX - rect.left - rect.width / 2;
+      const y = e.clientY - rect.top - rect.height / 2;
+      btn.style.transform = `translate(${x * strength}px, ${y * strength}px)`;
+    });
+    btn.addEventListener('pointerleave', () => {
+      btn.style.transform = '';
+    });
+    btn.addEventListener('click', (e: MouseEvent) => {
+      if (canvas) {
+        const pos = this.eventToPlane(e);
+        this.triggerTug(pos);
+      }
+    });
+  }
+
+  private eventToPlane(e: MouseEvent): THREE.Vector2 {
+    const canvas = this.canvasRef!.nativeElement;
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width * 4 - 2;
+    const y = -((e.clientY - rect.top) / rect.height * 2 - 1);
+    return new THREE.Vector2(x, y);
+  }
+
+  private initHeadline() {
+    const svg = this.headlineRef?.nativeElement as SVGSVGElement | undefined;
+    if (!svg) return;
+    const text = svg.querySelector('text');
+    if (!text || !(text as any).getComputedTextLength) return;
+    const len = (text as unknown as SVGTextContentElement).getComputedTextLength();
+    (text as SVGElement).style.setProperty('--dash', `${Math.floor(len)}`);
+    setTimeout(() => {
+      this.renderer2.addClass(text, 'stitched');
+    }, 3000);
+  }
+
+  private initScrollCue() {
+    const cue = this.scrollCueRef?.nativeElement;
+    if (!cue) return;
+    const hide = () => {
+      this.renderer2.setStyle(cue, 'opacity', '0');
+      window.removeEventListener('scroll', hide);
+    };
+    window.addEventListener('scroll', hide, { once: true });
   }
 
   ngOnDestroy(): void {
     cancelAnimationFrame(this.raf);
+    this.intersectionObserver?.disconnect();
     this.renderer?.dispose();
-    this.material?.dispose();
-    this.plane?.geometry.dispose();
-    this.maskTex?.dispose();
+    this.fg?.geometry.dispose();
+    this.bg?.geometry.dispose();
+    this.fg?.material.dispose();
+    this.bg?.material.dispose();
+    this.particles?.geometry.dispose();
+    (this.particles?.material as THREE.Material | undefined)?.dispose();
   }
 }

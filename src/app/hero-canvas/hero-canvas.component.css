@@ -1,0 +1,36 @@
+:host { display: block; }
+
+.headline {
+  font-family: serif;
+  font-size: 160px;
+  fill: transparent;
+  stroke: white;
+  stroke-width: 2;
+  stroke-dasharray: var(--dash, 1000);
+  stroke-dashoffset: var(--dash, 1000);
+  animation: stitch 3s forwards;
+}
+
+.headline.stitched {
+  fill: white;
+}
+
+@keyframes stitch {
+  to { stroke-dashoffset: 0; }
+}
+
+.scroll-cue {
+  width: 2px;
+  height: 24px;
+  background: white;
+  animation: pull 1.2s infinite;
+  transition: opacity .5s;
+}
+
+@keyframes pull {
+  0% { transform: translateY(0); opacity:1; }
+  50% { transform: translateY(6px); opacity:.6; }
+  100% { transform: translateY(0); opacity:1; }
+}
+
+.cta { transition: transform .2s; }
