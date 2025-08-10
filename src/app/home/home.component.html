@@ -1,16 +1,10 @@
 <div>
   <!-- HERO: WebGL constellation + kinetic headline -->
-  <section #journeySection class="section relative text-center text-white">
+  <section class="section relative text-center text-white">
     <app-hero-canvas class="absolute inset-0 -z-10"></app-hero-canvas>
-    <div class="relative z-10 space-y-8">
+    <div class="relative z-10">
       <app-kinetic-headline text="Stichi — handmade, cosmic, yours."></app-kinetic-headline>
-      <button (click)="scrollToSection('section-collection')">
-        <div appTilt appMagnetic class="px-8 py-4 rounded-full bg-white/10 ring-1 ring-white/40 backdrop-blur hover:scale-[1.03] transition">
-          Start Exploring
-        </div>
-      </button>
     </div>
-    <div class="absolute inset-x-0 bottom-10 text-xs opacity-70">scroll • discover</div>
   </section>
 
   <!-- PHILOSOPHY: reveal as you scroll -->
